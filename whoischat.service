@@ -1,0 +1,14 @@
+[Unit]
+Description=whoischat
+After=network.target
+
+[Service]
+Type=simple
+User=whoischat
+WorkingDirectory=/opt/whoischat
+ExecStart=/opt/whoischat/whoischat -whois.listen :43
+Restart=on-failure
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
