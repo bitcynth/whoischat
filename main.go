@@ -48,11 +48,31 @@ func handleConn(conn net.Conn) {
 		return
 	}
 
+	senderHost, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	if err != nil {
+		log.Print(err)
+		fmt.Fprintf(conn, "error :(\r\n")
+		return
+	}
+	senderID := senderHost
+
+	fmt.Fprintf(conn, "hai, %s!\n", senderID)
+
+	senderMessages, ok := messages[senderID]
+	if !ok || len(senderMessages) == 0 {
+		fmt.Fprintf(conn, "no messages :(\r\n")
+	}
+
+	senderMsgCount := len(senderMessages)
+	for i, m := range senderMessages {
+		fmt.Fprintf(conn, "%d/%d: msg from %s: %s\r\n", i+1, senderMsgCount, m.sender, m.msg)
+	}
+
 	in = strings.ReplaceAll(in, "\r\n", "")
 
 	parts := strings.SplitN(in, " ", 2)
 	if len(parts) != 2 {
-		fmt.Fprintf(conn, "error :(\r\n")
+		fmt.Fprintf(conn, "oki bai!\r\n")
 		return
 	}
 
@@ -65,16 +85,6 @@ func handleConn(conn net.Conn) {
 		}
 		return r
 	}, msg)
-
-	senderHost, _, err := net.SplitHostPort(conn.RemoteAddr().String())
-	if err != nil {
-		log.Print(err)
-		fmt.Fprintf(conn, "error :(\r\n")
-		return
-	}
-	senderID := senderHost
-
-	fmt.Fprintf(conn, "hai, %s!\n", senderID)
 
 	rcptIP := net.ParseIP(rcpt)
 	if rcptIP == nil {
@@ -89,17 +99,6 @@ func handleConn(conn net.Conn) {
 	}
 	messages[rcpt] = append(messages[rcpt], message{msg: msg, sender: senderID})
 	fmt.Fprintf(conn, "oki! :3\r\n")
-
-	senderMessages, ok := messages[senderID]
-	if !ok || len(senderMessages) == 0 {
-		fmt.Fprintf(conn, "no messages :(\r\n")
-		return
-	}
-
-	senderMsgCount := len(senderMessages)
-	for i, m := range senderMessages {
-		fmt.Fprintf(conn, "%d/%d: msg from %s: %s\r\n", i+1, senderMsgCount, m.sender, m.msg)
-	}
 
 	fmt.Fprintf(conn, "oki bai!\r\n")
 }
